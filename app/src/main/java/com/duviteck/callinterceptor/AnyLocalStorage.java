@@ -16,7 +16,7 @@ public class AnyLocalStorage {
     return context.getSharedPreferences(TEST_SHARED_PREFS, Context.MODE_PRIVATE);
   }
 
-  public static void updateLastProcessedCallDate(Context context, long time) {
+  public static void storeLastProcessedCallDate(Context context, long time) {
     getSharedPreferences(context).edit().putLong(PREFERENCE_KEY_LAST_PROCESSED_CALL_DATE, time).apply();
   }
 

@@ -5,6 +5,8 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.support.v4.app.NotificationCompat;
+import android.telephony.PhoneNumberUtils;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.duviteck.callinterceptor.CallLogHelper.CallEntity;
@@ -40,11 +42,15 @@ public class RecallNotificationManager {
 
   private static Notification buildNotification(Context context, CallEntity call) {
     NotificationCompat.Builder builder = new NotificationCompat.Builder(context.getApplicationContext());
-    builder.setContentTitle(call.number);
+
+    String contentTitle = TextUtils.isEmpty(call.cachedName)
+        ? PhoneNumberUtils.formatNumber(call.number)  // TODO: it covers only main cases
+        : call.cachedName;
+
+    builder.setContentTitle(contentTitle);
     builder.setContentText("Recall for free");
     builder.setSmallIcon(R.mipmap.ic_launcher);
     builder.setLargeIcon(BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_home_logo));
-//    builder.setPriority(NotificationCompat.PRIORITY_LOW);
 
     return builder.build();
   }

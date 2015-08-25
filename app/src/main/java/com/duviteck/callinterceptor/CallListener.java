@@ -12,8 +12,6 @@ import com.duviteck.callinterceptor.CallLogHelper.CallEntity;
 
 import java.util.Date;
 
-import static com.duviteck.callinterceptor.AnyLocalStorage.getLastProcessedCallDate;
-import static com.duviteck.callinterceptor.AnyLocalStorage.updateLastProcessedCallDate;
 import static java.lang.Long.valueOf;
 
 /**
@@ -28,7 +26,7 @@ public class CallListener extends BroadcastReceiver {
   public void onReceive(final Context context, Intent intent) {
     String phoneState = intent.getStringExtra(TelephonyManager.EXTRA_STATE);
     if (TelephonyManager.EXTRA_STATE_IDLE.equals(phoneState)) {
-      Log.e(TAG, "received IDLE state");
+      Log.d(TAG, "received IDLE state");
 
       /**
        * For now we use delayed processing, since we receive IDLE state a bit earlier than
@@ -37,34 +35,35 @@ public class CallListener extends BroadcastReceiver {
        * As an alternative, Service can be started here.
        *
        * TODO: investigate Service necessity there
+       * TODO: don't run DB query and other long-running operations on UI thread
        */
       Handler handler = new Handler(Looper.getMainLooper());
       handler.postDelayed(new Runnable() {
         @Override
         public void run() {
-          Log.e(TAG, "processing started after [delay]:" + DELAY_BEFORE_PROCESS + "ms");
+          Log.d(TAG, "processing started after [delay]:" + DELAY_BEFORE_PROCESS + "ms");
 
-          final long lastCheckDate = getLastProcessedCallDate(context);
-          Log.e(TAG, "[last check]:" + lastCheckDate + " " + new Date(valueOf(lastCheckDate)));
+          final long lastProcessedCallDate = AnyLocalStorage.getLastProcessedCallDate(context);
+          Log.d(TAG, "[last check]:" + lastProcessedCallDate + " " + new Date(valueOf(lastProcessedCallDate)));
 
-          CallEntity lastCall = CallLogHelper.getLastCall(context, lastCheckDate);
+          CallEntity lastCall = CallLogHelper.getLastCall(context, lastProcessedCallDate);
 
           if (lastCall != null) {
-            Log.e(TAG, "[last call]:" + lastCall.date + " " + new Date(valueOf(lastCall.date)));
+            Log.d(TAG, "[last call]:" + lastCall.date + " " + new Date(valueOf(lastCall.date)));
             if (lastCall.isMissed()) {
-              Log.e(TAG, "detected new MISSED call");
+              Log.d(TAG, "detected new MISSED call");
               MissedCallsManager.onNewMissedCallsDetected(context, lastCall);
             } else if (lastCall.isIncomingOrOutgoing()) {
-              Log.e(TAG, "detected new NON-MISSED call");
+              Log.d(TAG, "detected new NON-MISSED call");
               MissedCallsManager.onNewOutgoingAndIncomingCallDetected(context, lastCall);
             } else if (lastCall.isDeclined()) {
-              Log.e(TAG, "detected new DECLINED call");
+              Log.d(TAG, "detected new DECLINED call");
               MissedCallsManager.onNewDeclinedCallDetected(context, lastCall);
             }
 
-            updateLastProcessedCallDate(context, lastCall.date);
+            AnyLocalStorage.storeLastProcessedCallDate(context, lastCall.date);
           } else {
-            Log.e(TAG, "no new calls found");
+            Log.d(TAG, "no new calls found");
           }
         }
       }, DELAY_BEFORE_PROCESS);
